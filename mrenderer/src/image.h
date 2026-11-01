@@ -14,13 +14,23 @@ struct Color {
 	const uint8_t& operator[](const int i) const { return rgba[i]; }
 };
 
+namespace colors {
+	inline constexpr Color red{ 255, 0, 0, 255 };
+	inline constexpr Color green{ 0, 255, 0, 255 };
+	inline constexpr Color blue{ 0, 0, 255, 255 };
+	inline constexpr Color yellow{ 255, 255, 0, 255 };
+	inline constexpr Color black{ 0, 0, 0, 0 };
+	inline constexpr Color white{ 255, 255, 255, 255 };
+}
+
 class Image {
 public:
 	Image() = default;
 	Image(int w, int h, uint8_t channels);
-	int write_png(std::filesystem::path) const;
+	int write_png(std::filesystem::path, bool flip);
 	void set(int x, int y, const Color& c);
 	Color get(int x, int y) const;
+	void flipY();
 	int width() const;
 	int height() const;
 private:
