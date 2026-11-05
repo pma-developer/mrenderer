@@ -6,7 +6,7 @@
 #include "image.h"
 #include <filesystem>
 
-Image::Image(int w, int h, uint8_t channels) : w(w), h(h), channels(channels), data(w* h* channels, 0) {}
+Image::Image(int w, int h, uint8_t channels) : w(w), h(h), channels(channels), data(w*h*channels, 0) {}
 
 int Image::write_png(std::filesystem::path path, bool flip) {
 	stbi_flip_vertically_on_write(flip);

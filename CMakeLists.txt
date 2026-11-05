@@ -11,7 +11,10 @@ endif()
 
 project ("mrenderer")
 
+add_subdirectory ("mrenderer")
 
+
+option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 if(BUILD_BENCHMARKS)
 	include(FetchContent)
 
@@ -27,7 +30,6 @@ if(BUILD_BENCHMARKS)
 	add_subdirectory ("mrenderer/benchmarks")
 endif()
 
-# Include sub-projects.
-add_subdirectory ("mrenderer")
+
 target_include_directories(mrenderer_lib PRIVATE "third_party/")
 target_include_directories(mrenderer_app PRIVATE "third_party/")

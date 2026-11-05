@@ -11,12 +11,12 @@ int main()
     constexpr int height = 9;
     Image framebuffer = Image(width, height, 3);
     line(0, 0, width - 1, height - 3, framebuffer, colors::green);
-    b_line2(0, width - 1, width - 1, height - 3, framebuffer, colors::yellow);
+    line(0, width - 1, width - 1, height - 3, framebuffer, colors::yellow);
     line(width - 1, 3, 0, height - 3, framebuffer, colors::green);
-    b_line2(width - 1, 3, 0, height - 3, framebuffer, colors::blue);
+    line(width - 1, 3, 0, height - 3, framebuffer, colors::blue);
 
-    b_line2(0, 0, 3, height - 3, framebuffer, colors::white);
-    b_line2(0, height - 3, 3, 0, framebuffer, colors::white);
+    line(0, 0, 3, height - 3, framebuffer, colors::white);
+    line(0, height - 3, 3, 0, framebuffer, colors::white);
 
     //line(3, 1, 10, 10, framebuffer, colors::green);
 

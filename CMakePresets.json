@@ -42,7 +42,6 @@
     {
       "name": "benchmarks",
       "inherits": "x64-release",
-      "binaryDir": "${sourceDir}/out/build-benchmarks",
       "cacheVariables": {
         "BUILD_BENCHMARKS": "ON"
       }
