@@ -15,6 +15,9 @@ out
 *.o
 *.obj
 
+# Not ignoring .obj files representing 3D models
+!assets/**/*.obj
+
 # Precompiled Headers
 *.gch
 *.pch
