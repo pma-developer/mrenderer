@@ -1,8 +1,9 @@
-﻿#include "main.h"
+﻿#include "renderer.h"
 #include "image.h"
 
 #include <ctime>
 #include <cassert>
+#include <iostream>
 
 
 void b_line2(int ax, int ay, int bx, int by, Image& framebuffer, const Color& color) {
