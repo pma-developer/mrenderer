@@ -6,40 +6,43 @@
 #include "image.h"
 #include <filesystem>
 
-Image::Image(int w, int h, uint8_t channels) : w(w), h(h), channels(channels), data(w*h*channels, 0) {}
+namespace mrenderer {
 
-int Image::write_png(std::filesystem::path path, bool flip) {
-	stbi_flip_vertically_on_write(flip);
-	return stbi_write_png(path.string().c_str(), w, h, channels, data.data(), 0);
-}
+	Image::Image(int w, int h, uint8_t channels) : w(w), h(h), channels(channels), data(w* h* channels, 0) {}
 
-void Image::set(int x, int y, const Color& c) {
-	if (x < 0 || y < 0 || y >= h || x >= w) return;
-	size_t offset = (x + static_cast<size_t>(y) * w) * channels;
-	memcpy(data.data() + offset, c.rgba, channels);
-}
-
-Color Image::get(int x, int y) const {
-	size_t offset = (x + static_cast<size_t>(y) * w) * channels;
-	Color res = { 0 };
-	for (uint8_t ch = 0; ch < channels; ++ch) {
-		res[ch] = data[offset + ch];
+	int Image::write_png(std::filesystem::path path, bool flip) {
+		stbi_flip_vertically_on_write(flip);
+		return stbi_write_png(path.string().c_str(), w, h, channels, data.data(), 0);
 	}
-	return res;
-}
 
-void Image::flipY() {
-	assert(w > 0 && h > 0 && channels > 0);
-	const int row_bytes = w * channels;
-
-	for (int byte = 0; byte < row_bytes * (h / 2); ++byte) {
-		int row = byte / row_bytes;
-		int col = byte % row_bytes;
-
-		int flipped = (h - row - 1) * row_bytes + col;
-		std::swap(data[byte], data[flipped]);
+	void Image::set(int x, int y, const Color& c) {
+		if (x < 0 || y < 0 || y >= h || x >= w) return;
+		size_t offset = (x + static_cast<size_t>(y) * w) * channels;
+		memcpy(data.data() + offset, c.rgba, channels);
 	}
-}
 
-int Image::width() const { return w; }
-int Image::height() const { return h; }
+	Color Image::get(int x, int y) const {
+		size_t offset = (x + static_cast<size_t>(y) * w) * channels;
+		Color res = { 0 };
+		for (uint8_t ch = 0; ch < channels; ++ch) {
+			res[ch] = data[offset + ch];
+		}
+		return res;
+	}
+
+	void Image::flipY() {
+		assert(w > 0 && h > 0 && channels > 0);
+		const int row_bytes = w * channels;
+
+		for (int byte = 0; byte < row_bytes * (h / 2); ++byte) {
+			int row = byte / row_bytes;
+			int col = byte % row_bytes;
+
+			int flipped = (h - row - 1) * row_bytes + col;
+			std::swap(data[byte], data[flipped]);
+		}
+	}
+
+	int Image::width() const { return w; }
+	int Image::height() const { return h; }
+}

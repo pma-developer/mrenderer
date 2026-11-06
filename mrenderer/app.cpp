@@ -7,26 +7,6 @@
 
 int main()
 {
-    constexpr int width = 16;
-    constexpr int height = 9;
-    Image framebuffer = Image(width, height, 3);
-    line(0, 0, width - 1, height - 3, framebuffer, colors::green);
-    line(0, width - 1, width - 1, height - 3, framebuffer, colors::yellow);
-    line(width - 1, 3, 0, height - 3, framebuffer, colors::green);
-    line(width - 1, 3, 0, height - 3, framebuffer, colors::blue);
-
-    line(0, 0, 3, height - 3, framebuffer, colors::white);
-    line(0, height - 3, 3, 0, framebuffer, colors::white);
-
-    //line(3, 1, 10, 10, framebuffer, colors::green);
-
-    //std::srand(std::time({}));
-    //for (int i = 0; i < 200; i++) {
-    //    int ax = rand() % width, ay = rand() % height;
-    //    int bx = rand() % width, by = rand() % height;
-    //    line(ax, ay, bx, by, framebuffer, red);
-    //}
-
-    framebuffer.write_png("framebuffer.png", true);
-    return 0;
+	mrenderer::runTest();
+	return 0;
 }
