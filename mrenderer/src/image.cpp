@@ -10,12 +10,12 @@ namespace mrenderer {
 
 	Image::Image(int w, int h, uint8_t channels) : w(w), h(h), channels(channels), data(w* h* channels, 0) {}
 
-	int Image::write_png(std::filesystem::path path, bool flip) {
+	int Image::WritePng(const std::filesystem::path& out_path, bool flip) {
 		stbi_flip_vertically_on_write(flip);
-		return stbi_write_png(path.string().c_str(), w, h, channels, data.data(), 0);
+		return stbi_write_png(out_path.string().c_str(), w, h, channels, data.data(), 0);
 	}
 
-	void Image::set(int x, int y, const Color& c) {
+	void Image::set(int x, int y, const Color c) {
 		if (x < 0 || y < 0 || y >= h || x >= w) return;
 		size_t offset = (x + static_cast<size_t>(y) * w) * channels;
 		memcpy(data.data() + offset, c.rgba, channels);
@@ -30,7 +30,7 @@ namespace mrenderer {
 		return res;
 	}
 
-	void Image::flipY() {
+	void Image::FlipY() {
 		assert(w > 0 && h > 0 && channels > 0);
 		const int row_bytes = w * channels;
 

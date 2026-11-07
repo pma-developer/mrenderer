@@ -1,5 +1,4 @@
 #pragma once
-
 #include <iostream>
 #include <vector>
 #include <filesystem>
@@ -30,10 +29,10 @@ namespace mrenderer {
 	public:
 		Image() = default;
 		Image(int w, int h, uint8_t channels);
-		int write_png(std::filesystem::path, bool flip);
-		void set(int x, int y, const Color& c);
+		int WritePng(const std::filesystem::path&, bool flip);
+		void set(int x, int y, const Color c);
 		Color get(int x, int y) const;
-		void flipY();
+		void FlipY();
 		int width() const;
 		int height() const;
 	private:

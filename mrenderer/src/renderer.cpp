@@ -1,12 +1,13 @@
 ﻿#include "renderer.h"
 #include "mmath.h"
+#include "model.h"
 
 #include <ctime>
 #include <cassert>
 #include <iostream>
 
 namespace mrenderer {
-    void line(int ax, int ay, int bx, int by, Image& framebuffer, const Color& color) {
+    void Line(int ax, int ay, int bx, int by, Image& framebuffer, const Color& color) {
         bool steep = std::abs(bx - ax) < std::abs(by - ay);
         if (steep) {
             std::swap(ax, ay);
@@ -37,36 +38,54 @@ namespace mrenderer {
                 framebuffer.set(x, y, color);
         }
     }
+    void Line(Vec2i p0, Vec2i p1, Image& framebuffer, const Color& color) {
+        Line(p0.x, p0.y, p1.x, p1.y, framebuffer, color);
+    }
+    void Line3dOrtho(Vec3f p0, Vec3f p1, Image& framebuffer, const Color& color) {
+        p0.x = (p0.x + 1) * framebuffer.width() / 2;
+        p0.y = (p0.y + 1) * framebuffer.height() / 2;
 
+        p1.x = (p1.x + 1) * framebuffer.width() / 2;
+        p1.y = (p1.y + 1) * framebuffer.height() / 2;
 
-    void runTest() {
-        Vec2i tvec = { 1, 1 };
-        Vec2i tvec2 = { 3, 3 };
+        Vec2i proj_p0_i = Vec2i{ (int)std::round(p0.x), (int)std::round(p0.y) };
+        Vec2i proj_p1_i = Vec2i{ (int)std::round(p1.x), (int)std::round(p1.y) };
+        Line(proj_p0_i, proj_p1_i, framebuffer, color);
+    };
+    void Line3d(Vec3f p0, Vec3f p1, Image& framebuffer, const Color& color) {
+        Vec2f proj_p0 = Vec2f{ p0.x / p0.z, p0.y / p0.z };
+        Vec2f proj_p1 = Vec2f{ p1.x / p1.z, p1.y / p1.z };
 
-        std::cout << std::format("vec1 {0}; vec2 {1}", tvec, tvec2) << std::endl;
-        std::cout << to_string(tvec + tvec2) << std::endl;
+        proj_p0.x = (proj_p0.x + 1) * framebuffer.width() / 2;
+        proj_p0.y = (proj_p0.y + 1) * framebuffer.height() / 2;
 
-        return;
-        constexpr int width = 16;
-        constexpr int height = 9;
-        Image framebuffer = Image(width, height, 3);
-        line(0, 0, width - 1, height - 3, framebuffer, colors::green);
-        line(0, width - 1, width - 1, height - 3, framebuffer, colors::yellow);
-        line(width - 1, 3, 0, height - 3, framebuffer, colors::green);
-        line(width - 1, 3, 0, height - 3, framebuffer, colors::blue);
+        proj_p1.x = (proj_p1.x + 1) * framebuffer.width() / 2;
+        proj_p1.y = (proj_p1.y + 1) * framebuffer.height() / 2;
 
-        line(0, 0, 3, height - 3, framebuffer, colors::white);
-        line(0, height - 3, 3, 0, framebuffer, colors::white);
+        Vec2i proj_p0_i = Vec2i{ (int)std::round(proj_p0.x), (int)std::round(proj_p0.y) };
+        Vec2i proj_p1_i = Vec2i{ (int)std::round(proj_p1.x), (int)std::round(proj_p1.y) };
+        Line(proj_p0_i, proj_p1_i, framebuffer, color);
+    };
 
-        //line(3, 1, 10, 10, framebuffer, colors::green);
+    void DrawWireframe(const Model& model, Image& framebuffer) {
+        for(Vec3i trig : model.trigs) {
+            Vec3f v0 = model.vertices[trig.data[0]];
+            Vec3f v1 = model.vertices[trig.data[1]];
+            Vec3f v2 = model.vertices[trig.data[2]];
 
-        //std::srand(std::time({}));
-        //for (int i = 0; i < 200; i++) {
-        //    int ax = rand() % width, ay = rand() % height;
-        //    int bx = rand() % width, by = rand() % height;
-        //    line(ax, ay, bx, by, framebuffer, red);
-        //}
+            Line3dOrtho(v0, v1, framebuffer, colors::white);
+            Line3dOrtho(v1, v2, framebuffer, colors::white);
+            Line3dOrtho(v2, v0, framebuffer, colors::white);
+        }
+    }
 
-        framebuffer.write_png("framebuffer.png", true);
+    void RunTest() {
+        constexpr int kWidth = 1280;
+        constexpr int kHeight = 720;
+        Image framebuffer = Image(kWidth, kHeight, 3);
+        Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
+        DrawWireframe(m, framebuffer);
+
+        framebuffer.WritePng("framebuffer.png", true);
     }
 }

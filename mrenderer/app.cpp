@@ -7,6 +7,6 @@
 
 int main()
 {
-	mrenderer::runTest();
+	mrenderer::RunTest();
 	return 0;
 }

@@ -33,3 +33,12 @@ endif()
 
 target_include_directories(mrenderer_lib PRIVATE "third_party/")
 target_include_directories(mrenderer_app PRIVATE "third_party/")
+
+add_custom_target(assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${PROJECT_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:mrenderer_app>/assets"
+)
+
+add_dependencies(mrenderer_app assets)
+install(TARGETS mrenderer_app DESTINATION "out/installed")
