@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cassert>
 #include <iostream>
+#include <array>
 
 namespace mrenderer {
     void Line(int ax, int ay, int bx, int by, Image& framebuffer, const Color& color) {
@@ -67,6 +68,24 @@ namespace mrenderer {
         Line(proj_p0_i, proj_p1_i, framebuffer, color);
     };
 
+    void DrawTriangleScanline(std::array<Vec2i, 3> verts, Image& framebuffer, const Color& color) {
+        std::sort(verts.begin(), verts.end(), [](Vec2i a, Vec2i b) {
+            return a.y < b.y;
+        });
+        Vec2i v0 = verts[0];
+        Vec2i v1 = verts[1];
+        Vec2i v2 = verts[2];
+
+
+        for (int y = v0.y; y <= v2.y; ++y) {
+            float x0 = (y - v0.y) * (v2.x - v0.x) / (float)(v2.y - v0.y) + v0.x;
+            float x1 = y <= v1.y
+                ? (y - v0.y) * (v1.x - v0.x) / (float)(v1.y - v0.y) + v0.x
+                : (y - v1.y) * (v2.x - v1.x) / (float)(v2.y - v1.y) + v1.x;
+
+            Line(std::round(x0), y, std::round(x1), y, framebuffer, color);
+        }
+    }
     void DrawWireframe(const Model& model, Image& framebuffer) {
         for(Vec3i trig : model.trigs) {
             Vec3f v0 = model.vertices[trig.data[0]];
@@ -80,11 +99,23 @@ namespace mrenderer {
     }
 
     void RunTest() {
-        constexpr int kWidth = 1280;
-        constexpr int kHeight = 720;
+        constexpr int kWidth = 20;
+        constexpr int kHeight = 20;
+
+        Vec2i v0{ 9, 1 };
+        Vec2i v1{ 13, 10 };
+        Vec2i v2{ 1, 16 };
+
         Image framebuffer = Image(kWidth, kHeight, 3);
-        Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
-        DrawWireframe(m, framebuffer);
+
+        auto trig = std::array<Vec2i, 3>{ v0, v1, v2 };
+        //Line(v0, v1, framebuffer, colors::white);
+        //Line(v1, v2, framebuffer, colors::white);
+        //Line(v2, v0, framebuffer, colors::white);
+        DrawTriangleScanline(trig, framebuffer, colors::blue);
+
+        //Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
+        //DrawWireframe(m, framebuffer);
 
         framebuffer.WritePng("framebuffer.png", true);
     }
