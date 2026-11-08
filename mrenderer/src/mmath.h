@@ -1,5 +1,8 @@
 #pragma once
 #include <format>
+#include <limits>
+#include <span>
+#include <tuple>
 
 namespace mrenderer {
 	template <typename T, size_t L> struct Vec {
@@ -19,6 +22,9 @@ namespace mrenderer {
 			struct { T x, y; };
 			T data[2];
 		};
+
+		static constexpr Vec<T, 2> Zero() { return { 0, 0}; };
+		static constexpr Vec<T, 2> One() { return { 1, 1}; };
 	};
 
 	template <typename T, size_t L>
@@ -49,6 +55,30 @@ namespace mrenderer {
 	Vec<T, L>& operator-=(Vec<T, L>& lhs, const Vec<T, L>& rhs) {
 		lhs = lhs - rhs;
 		return lhs;
+	}
+
+	template <typename T, size_t L>
+	std::tuple<Vec<T, L>, Vec<T, L>> CalculateAABB(std::span<Vec<T, L>> vecs) {
+		Vec<T, L> min, max;
+		for (size_t i = 0; i < L; ++i) {
+			min.data[i] = std::numeric_limits<T>::max();
+			max.data[i] = std::numeric_limits<T>::min();
+		}
+		
+
+		for(auto vec : vecs) {
+			for (size_t i = 0; i < L; ++i) {
+				if (min.data[i] > vec.data[i]) {
+					min.data[i] = vec.data[i];
+				}
+
+				if (max.data[i] < vec.data[i]) {
+					max.data[i] = vec.data[i];
+				}
+			}
+		}
+
+		return std::tuple{min, max};
 	}
 
 	template <typename T, size_t L>

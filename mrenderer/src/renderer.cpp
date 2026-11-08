@@ -6,6 +6,8 @@
 #include <cassert>
 #include <iostream>
 #include <array>
+#include <span>
+#include <ranges>
 
 namespace mrenderer {
     void Line(int ax, int ay, int bx, int by, Image& framebuffer, const Color& color) {
@@ -76,16 +78,36 @@ namespace mrenderer {
         Vec2i v1 = verts[1];
         Vec2i v2 = verts[2];
 
+        if (v0.y == v2.y) {
+            auto [minIt, maxIt] = std::minmax_element(verts.begin(), verts.end(), [](Vec2i a, Vec2i b) {
+                return a.x < a.y;
+            });
+            Line(minIt->x, v0.y, maxIt->x, v0.y, framebuffer, color);
+            return;
+        }
+
+        float slope01 = v1.y == v0.y ? 0 : (v1.x - v0.x) / (float)(v1.y - v0.y);
+        float slope12 = v2.y == v1.y ? 0 : (v2.x - v1.x) / (float)(v2.y - v1.y);
 
         for (int y = v0.y; y <= v2.y; ++y) {
             float x0 = (y - v0.y) * (v2.x - v0.x) / (float)(v2.y - v0.y) + v0.x;
-            float x1 = y <= v1.y
-                ? (y - v0.y) * (v1.x - v0.x) / (float)(v1.y - v0.y) + v0.x
-                : (y - v1.y) * (v2.x - v1.x) / (float)(v2.y - v1.y) + v1.x;
+            float x1 = y < v1.y
+                ? (y - v0.y) * slope01 + v0.x
+                : (y - v1.y) * slope12 + v1.x;
 
             Line(std::round(x0), y, std::round(x1), y, framebuffer, color);
         }
     }
+
+    void DrawAABB(std::span<Vec2i> verts, Image& framebuffer, const Color& color) {
+        auto [start, end] = CalculateAABB(verts);
+        Vec2i start_r = Vec2i{ end.x, start.y };
+        Vec2i end_l = Vec2i{ start.x, end.y };
+
+        DrawTriangleScanline({ start, start_r, end_l }, framebuffer, color);
+        DrawTriangleScanline({ start_r, end, end_l }, framebuffer, color);
+    }
+
     void DrawWireframe(const Model& model, Image& framebuffer) {
         for(Vec3i trig : model.trigs) {
             Vec3f v0 = model.vertices[trig.data[0]];
@@ -112,7 +134,8 @@ namespace mrenderer {
         //Line(v0, v1, framebuffer, colors::white);
         //Line(v1, v2, framebuffer, colors::white);
         //Line(v2, v0, framebuffer, colors::white);
-        DrawTriangleScanline(trig, framebuffer, colors::blue);
+        DrawAABB(trig, framebuffer, colors::white);
+        DrawTriangleScanline(trig, framebuffer, colors::red);
 
         //Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
         //DrawWireframe(m, framebuffer);
