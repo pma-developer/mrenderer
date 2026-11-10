@@ -44,31 +44,12 @@ namespace mrenderer {
     void Line(Vec2i p0, Vec2i p1, Image& framebuffer, const Color& color) {
         Line(p0.x, p0.y, p1.x, p1.y, framebuffer, color);
     }
-    void Line3dOrtho(Vec3f p0, Vec3f p1, Image& framebuffer, const Color& color) {
-        p0.x = (p0.x + 1) * framebuffer.width() / 2;
-        p0.y = (p0.y + 1) * framebuffer.height() / 2;
-
-        p1.x = (p1.x + 1) * framebuffer.width() / 2;
-        p1.y = (p1.y + 1) * framebuffer.height() / 2;
-
-        Vec2i proj_p0_i = Vec2i{ (int)std::round(p0.x), (int)std::round(p0.y) };
-        Vec2i proj_p1_i = Vec2i{ (int)std::round(p1.x), (int)std::round(p1.y) };
-        Line(proj_p0_i, proj_p1_i, framebuffer, color);
-    };
-    void Line3d(Vec3f p0, Vec3f p1, Image& framebuffer, const Color& color) {
-        Vec2f proj_p0 = Vec2f{ p0.x / p0.z, p0.y / p0.z };
-        Vec2f proj_p1 = Vec2f{ p1.x / p1.z, p1.y / p1.z };
-
-        proj_p0.x = (proj_p0.x + 1) * framebuffer.width() / 2;
-        proj_p0.y = (proj_p0.y + 1) * framebuffer.height() / 2;
-
-        proj_p1.x = (proj_p1.x + 1) * framebuffer.width() / 2;
-        proj_p1.y = (proj_p1.y + 1) * framebuffer.height() / 2;
-
-        Vec2i proj_p0_i = Vec2i{ (int)std::round(proj_p0.x), (int)std::round(proj_p0.y) };
-        Vec2i proj_p1_i = Vec2i{ (int)std::round(proj_p1.x), (int)std::round(proj_p1.y) };
-        Line(proj_p0_i, proj_p1_i, framebuffer, color);
-    };
+    Vec2i ProjectOrtho(Vec3f p, int w, int h) {
+        return Vec2i{
+            (int)((p.x + 1) * w / 2),
+            (int)((p.y + 1) * h / 2)
+        };
+    }
 
     void DrawTriangleScanline(std::array<Vec2i, 3> verts, Image& framebuffer, const Color& color) {
         std::sort(verts.begin(), verts.end(), [](Vec2i a, Vec2i b) {
@@ -98,17 +79,13 @@ namespace mrenderer {
             Line(std::round(x0), y, std::round(x1), y, framebuffer, color);
         }
     }
-
-    void DrawTriangle(std::span<Vec2i, 3> verts, Image& framebuffer, const Color& color) {
-        Vec2i v0 = verts[0];
-        Vec2i v1 = verts[1];
-        Vec2i v2 = verts[2];
-
+    void DrawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, Image& framebuffer, const Color& color) {
         Vec2i q1 = v1 - v0;
         Vec2i q2 = v2 - v0;
 
-        int total_area = Cross(q1, q2);
-        auto [start, end] = CalculateAABB(verts);
+        int total_area = Cross(q1, q2); // signed area of q1 q2 parallelogram
+        if (total_area < 2) return;     // discard if area of q1 q2 triangle(total_area/2) less than a pixel or triangle is backfacing
+        auto [start, end] = CalculateAABB<int,2>(std::array{ v0, v1, v2 });
 
         for (int y = start.y; y <= end.y; ++y) {
             for (int x = start.x; x <= end.x; ++x) {
@@ -125,7 +102,7 @@ namespace mrenderer {
         }
     }
 
-    void DrawAABB(std::span<Vec2i> verts, Image& framebuffer, const Color& color) {
+    void DrawAABB(std::span<const Vec2i> verts, Image& framebuffer, const Color& color) {
         auto [start, end] = CalculateAABB(verts);
         Vec2i start_r = Vec2i{ end.x, start.y };
         Vec2i end_l = Vec2i{ start.x, end.y };
@@ -140,15 +117,41 @@ namespace mrenderer {
             Vec3f v1 = model.vertices[trig.data[1]];
             Vec3f v2 = model.vertices[trig.data[2]];
 
-            Line3dOrtho(v0, v1, framebuffer, colors::white);
-            Line3dOrtho(v1, v2, framebuffer, colors::white);
-            Line3dOrtho(v2, v0, framebuffer, colors::white);
+            Vec2i v0_p = ProjectOrtho(v0, framebuffer.width(), framebuffer.height());
+            Vec2i v1_p = ProjectOrtho(v1, framebuffer.width(), framebuffer.height());
+            Vec2i v2_p = ProjectOrtho(v2, framebuffer.width(), framebuffer.height());
+
+
+            Line(v0_p, v1_p, framebuffer, colors::white);
+            Line(v1_p, v2_p, framebuffer, colors::white);
+            Line(v2_p, v0_p, framebuffer, colors::white);
+        }
+    }
+
+    void DrawModel(const Model& model, Image& framebuffer) {
+        for (Vec3i trig : model.trigs) {
+            Vec3f v0 = model.vertices[trig.data[0]];
+            Vec3f v1 = model.vertices[trig.data[1]];
+            Vec3f v2 = model.vertices[trig.data[2]];
+
+            Vec2i v0_p = ProjectOrtho(v0, framebuffer.width(), framebuffer.height());
+            Vec2i v1_p = ProjectOrtho(v1, framebuffer.width(), framebuffer.height());
+            Vec2i v2_p = ProjectOrtho(v2, framebuffer.width(), framebuffer.height());
+
+            Color c {
+                std::rand() % 255,
+                std::rand() % 255,
+                std::rand() % 255,
+                255
+            };
+
+            DrawTriangle(v0_p, v1_p, v2_p, framebuffer, c);
         }
     }
 
     void RunTest() {
-        constexpr int kWidth = 20;
-        constexpr int kHeight = 20;
+        constexpr int kWidth = 1280;
+        constexpr int kHeight = 720;
 
         Vec2i v0{ 9, 1 };
         Vec2i v1{ 13, 10 };
@@ -157,15 +160,13 @@ namespace mrenderer {
         Image framebuffer = Image(kWidth, kHeight, 3);
 
         auto trig = std::array<Vec2i, 3>{ v0, v1, v2 };
-        //Line(v0, v1, framebuffer, colors::white);
-        //Line(v1, v2, framebuffer, colors::white);
-        //Line(v2, v0, framebuffer, colors::white);
-        DrawAABB(trig, framebuffer, colors::white);
-        DrawTriangleScanline(trig, framebuffer, colors::red);
-        DrawTriangle(trig, framebuffer, colors::blue);
 
-        //Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
+        //DrawAABB(trig, framebuffer, colors::white);
+        //DrawTriangleScanline(trig, framebuffer, colors::red);
+
+        Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
         //DrawWireframe(m, framebuffer);
+        DrawModel(m, framebuffer);
 
         framebuffer.WritePng("framebuffer.png", true);
     }

@@ -45,4 +45,5 @@ namespace mrenderer {
 
 	int Image::width() const { return w; }
 	int Image::height() const { return h; }
+	uint8_t Image::get_channels() const { return channels; }
 }

@@ -57,24 +57,14 @@ namespace mrenderer {
 		return lhs;
 	}
 
-	template <typename T, size_t L, size_t N>
-	std::tuple<Vec<T, L>, Vec<T, L>> CalculateAABB(std::span<Vec<T, L>, N> vecs) {
-		Vec<T, L> min, max;
-		for (size_t i = 0; i < L; ++i) {
-			min.data[i] = std::numeric_limits<T>::max();
-			max.data[i] = std::numeric_limits<T>::min();
-		}
+	template <typename T, size_t L>
+	std::tuple<Vec<T, L>, Vec<T, L>> CalculateAABB(std::span<const Vec<T, L>> vecs) {
+		Vec<T, L> min = vecs[0], max = vecs[0];
 		
-
 		for(auto vec : vecs) {
 			for (size_t i = 0; i < L; ++i) {
-				if (min.data[i] > vec.data[i]) {
-					min.data[i] = vec.data[i];
-				}
-
-				if (max.data[i] < vec.data[i]) {
-					max.data[i] = vec.data[i];
-				}
+				if (min.data[i] > vec.data[i]) min.data[i] = vec.data[i];
+				if (max.data[i] < vec.data[i]) max.data[i] = vec.data[i];
 			}
 		}
 

@@ -29,12 +29,13 @@ namespace mrenderer {
 	public:
 		Image() = default;
 		Image(int w, int h, uint8_t channels);
-		int WritePng(const std::filesystem::path&, bool flip);
+		int WritePng(const std::filesystem::path& path, bool flip);
 		void set(int x, int y, const Color c);
 		Color get(int x, int y) const;
 		void FlipY();
 		int width() const;
 		int height() const;
+		uint8_t get_channels() const;
 	private:
 		int w = 0, h = 0;
 		uint8_t channels = 0;
