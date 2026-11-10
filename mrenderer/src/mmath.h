@@ -43,7 +43,7 @@ namespace mrenderer {
 	}
 
 	template <typename T, size_t L>
-	Vec<T, L>& operator-(Vec<T, L>& lhs, const Vec<T, L>& rhs) {
+	Vec<T, L>& operator-(const Vec<T, L>& lhs, const Vec<T, L>& rhs) {
 		Vec<T, L> result;
 		for (size_t i = 0; i < L; ++i) {
 			result.data[i] = lhs.data[i] - rhs.data[i];
@@ -57,8 +57,8 @@ namespace mrenderer {
 		return lhs;
 	}
 
-	template <typename T, size_t L>
-	std::tuple<Vec<T, L>, Vec<T, L>> CalculateAABB(std::span<Vec<T, L>> vecs) {
+	template <typename T, size_t L, size_t N>
+	std::tuple<Vec<T, L>, Vec<T, L>> CalculateAABB(std::span<Vec<T, L>, N> vecs) {
 		Vec<T, L> min, max;
 		for (size_t i = 0; i < L; ++i) {
 			min.data[i] = std::numeric_limits<T>::max();
@@ -80,6 +80,21 @@ namespace mrenderer {
 
 		return std::tuple{min, max};
 	}
+
+	template <typename T>
+	constexpr Vec<T, 3> Cross(Vec<T, 3> p, Vec<T, 3> q) {
+		return Vec<T, 3> {
+			p.y * q.z - p.z * q.y,
+			p.z * q.x - p.x * q.z,
+			p.x * q.y - p.y * q.x
+		};
+	}
+
+	template <typename T>
+	constexpr T Cross(Vec<T, 2> p, Vec<T, 2> q) {
+		return p.x * q.y - p.y * q.x;
+	}
+
 
 	template <typename T, size_t L>
 	struct std::formatter<Vec<T, L>> : std::formatter<T> {

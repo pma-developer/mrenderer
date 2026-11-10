@@ -99,6 +99,32 @@ namespace mrenderer {
         }
     }
 
+    void DrawTriangle(std::span<Vec2i, 3> verts, Image& framebuffer, const Color& color) {
+        Vec2i v0 = verts[0];
+        Vec2i v1 = verts[1];
+        Vec2i v2 = verts[2];
+
+        Vec2i q1 = v1 - v0;
+        Vec2i q2 = v2 - v0;
+
+        int total_area = Cross(q1, q2);
+        auto [start, end] = CalculateAABB(verts);
+
+        for (int y = start.y; y <= end.y; ++y) {
+            for (int x = start.x; x <= end.x; ++x) {
+                Vec2i p = Vec2i{ x, y } - v0;
+                float gamma = Cross(q1, p) / (float)total_area;
+                float beta = Cross(p, q2) / (float)total_area;
+                float alpha = 1 - beta - gamma;
+                bool inside = alpha >= 0 && beta >= 0 && gamma >= 0;
+                
+                if (inside) {
+                    framebuffer.set(x, y, color);
+                }
+            }
+        }
+    }
+
     void DrawAABB(std::span<Vec2i> verts, Image& framebuffer, const Color& color) {
         auto [start, end] = CalculateAABB(verts);
         Vec2i start_r = Vec2i{ end.x, start.y };
@@ -136,6 +162,7 @@ namespace mrenderer {
         //Line(v2, v0, framebuffer, colors::white);
         DrawAABB(trig, framebuffer, colors::white);
         DrawTriangleScanline(trig, framebuffer, colors::red);
+        DrawTriangle(trig, framebuffer, colors::blue);
 
         //Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
         //DrawWireframe(m, framebuffer);
