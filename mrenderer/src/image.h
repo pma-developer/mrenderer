@@ -1,20 +1,15 @@
 #pragma once
+
+#include "vec.h"
+
 #include <iostream>
 #include <vector>
 #include <filesystem>
 
 namespace mrenderer {
-	struct Color {
-		uint8_t rgba[4];
 
-		uint8_t& r() { return rgba[0]; }
-		uint8_t& g() { return rgba[1]; }
-		uint8_t& b() { return rgba[2]; }
-		uint8_t& a() { return rgba[3]; }
+	using Color = Vec<uint8_t, 4>;
 
-		uint8_t& operator[](const int i) { return rgba[i]; }
-		const uint8_t& operator[](const int i) const { return rgba[i]; }
-	};
 
 	namespace colors {
 		inline constexpr Color red{ 255, 0, 0, 255 };

@@ -1,5 +1,5 @@
 ﻿#include "renderer.h"
-#include "mmath.h"
+#include "vec.h"
 #include "model.h"
 
 #include <ctime>
@@ -79,12 +79,12 @@ namespace mrenderer {
             Line(std::round(x0), y, std::round(x1), y, framebuffer, color);
         }
     }
-    void DrawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, Image& framebuffer, const Color& color) {
+    void DrawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, Color v0_c, Color v1_c, Color v2_c, Image& framebuffer) {
         Vec2i q1 = v1 - v0;
         Vec2i q2 = v2 - v0;
 
-        int total_area = Cross(q1, q2); // signed area of q1 q2 parallelogram
-        if (total_area < 2) return;     // discard if area of q1 q2 triangle(total_area/2) less than a pixel or triangle is backfacing
+        int total_area = Cross(q1, q2); // signed double area
+        if (total_area < 2) return;     // discard backfaces, triangles covering less than 1 px
         auto [start, end] = CalculateAABB<int,2>(std::array{ v0, v1, v2 });
 
         for (int y = start.y; y <= end.y; ++y) {
@@ -94,9 +94,19 @@ namespace mrenderer {
                 float beta = Cross(p, q2) / (float)total_area;
                 float alpha = 1 - beta - gamma;
                 bool inside = alpha >= 0 && beta >= 0 && gamma >= 0;
-                
+                Color color = alpha * v0_c + beta * v1_c + gamma * v2_c;
+
                 if (inside) {
+                    
                     framebuffer.set(x, y, color);
+                    if (alpha >= 0.1f && beta >= 0.1f && gamma >= 0.1f) {
+                        framebuffer.set(x, y, colors::black);
+                    }
+                    //float dist = Length(Vec3f{ alpha, beta, gamma } - Vec3f{ 0.3f, 0.3f, 0.3f });
+                    //float dist1 = Length(Vec3f{ alpha, beta, gamma });
+                    //if (dist1 <= 0.6f) {
+                    //    framebuffer.set(x, y, colors::black);
+                    //}
                 }
             }
         }
@@ -145,17 +155,19 @@ namespace mrenderer {
                 255
             };
 
-            DrawTriangle(v0_p, v1_p, v2_p, framebuffer, c);
+            DrawTriangle(v0_p, v1_p, v2_p, colors::red, colors::green, colors::blue, framebuffer);
         }
     }
 
     void RunTest() {
         constexpr int kWidth = 1280;
         constexpr int kHeight = 720;
+        //constexpr int kWidth = 320;
+        //constexpr int kHeight = 180;
 
-        Vec2i v0{ 9, 1 };
-        Vec2i v1{ 13, 10 };
-        Vec2i v2{ 1, 16 };
+        Vec2i v0{ 10, 1 };
+        Vec2i v1{ kWidth - 13, kHeight - 10 };
+        Vec2i v2{ 2, kHeight - 16 };
 
         Image framebuffer = Image(kWidth, kHeight, 3);
 
@@ -164,10 +176,11 @@ namespace mrenderer {
         //DrawAABB(trig, framebuffer, colors::white);
         //DrawTriangleScanline(trig, framebuffer, colors::red);
 
+        //DrawTriangle(v0, v1, v2, colors::red, colors::green, colors::blue, framebuffer);
         Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
-        //DrawWireframe(m, framebuffer);
         DrawModel(m, framebuffer);
-
+        //DrawWireframe(m, framebuffer);
+        
         framebuffer.WritePng("framebuffer.png", true);
     }
 }

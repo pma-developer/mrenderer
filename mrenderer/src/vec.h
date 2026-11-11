@@ -11,6 +11,7 @@ namespace mrenderer {
 	template <typename T> struct Vec<T, 3> {
 		union {
 			struct { T x, y, z; };
+			struct { T x, y, z; };
 			T data[3];
 		};
 
@@ -28,6 +29,34 @@ namespace mrenderer {
 	};
 
 	template <typename T, size_t L>
+	Vec<T, L> operator*(const Vec<T, L>& lhs, float k) {
+		Vec<T, L> result;
+		for (size_t i = 0; i < L; ++i) {
+			result.data[i] = lhs.data[i] * k;
+		}
+		return result;
+	}
+
+	template <typename T, size_t L>
+	Vec<T, L> operator*(float k, const Vec<T, L>& rhs) {
+		return rhs * k;
+	}
+
+	template <typename T, size_t L>
+	T Dot(const Vec<T, L>& v1, const Vec<T, L>& v2) {
+		T res = 0;
+		for (size_t i = 0; i < L; ++i) {
+			res += v1.data[i] * v2.data[i];
+		}
+		return res;
+	}
+
+	template <typename T, size_t L>
+	double Length(const Vec<T, L>& vec) {
+		return sqrt(Dot(vec, vec));
+	}
+
+	template <typename T, size_t L>
 	Vec<T, L> operator+(const Vec<T, L>& lhs, const Vec<T, L>& rhs) {
 		Vec<T, L> result;
 		for (size_t i = 0; i < L; ++i) {
@@ -43,7 +72,7 @@ namespace mrenderer {
 	}
 
 	template <typename T, size_t L>
-	Vec<T, L>& operator-(const Vec<T, L>& lhs, const Vec<T, L>& rhs) {
+	Vec<T, L> operator-(const Vec<T, L>& lhs, const Vec<T, L>& rhs) {
 		Vec<T, L> result;
 		for (size_t i = 0; i < L; ++i) {
 			result.data[i] = lhs.data[i] - rhs.data[i];

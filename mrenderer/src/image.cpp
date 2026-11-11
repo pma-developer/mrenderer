@@ -18,14 +18,14 @@ namespace mrenderer {
 	void Image::set(int x, int y, const Color c) {
 		if (x < 0 || y < 0 || y >= h || x >= w) return;
 		size_t offset = (x + static_cast<size_t>(y) * w) * channels;
-		memcpy(data.data() + offset, c.rgba, channels);
+		memcpy(data.data() + offset, c.data, channels);
 	}
 
 	Color Image::get(int x, int y) const {
 		size_t offset = (x + static_cast<size_t>(y) * w) * channels;
 		Color res = { 0 };
 		for (uint8_t ch = 0; ch < channels; ++ch) {
-			res[ch] = data[offset + ch];
+			res.data[ch] = data[offset + ch];
 		}
 		return res;
 	}
