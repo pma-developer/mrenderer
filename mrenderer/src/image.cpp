@@ -22,8 +22,9 @@ namespace mrenderer {
 	}
 
 	Color Image::get(int x, int y) const {
-		size_t offset = (x + static_cast<size_t>(y) * w) * channels;
 		Color res = { 0 };
+		if (x < 0 || y < 0 || y >= h || x >= w) return res;
+		size_t offset = (x + static_cast<size_t>(y) * w) * channels;
 		for (uint8_t ch = 0; ch < channels; ++ch) {
 			res.data[ch] = data[offset + ch];
 		}

@@ -8,6 +8,7 @@
 #include <array>
 #include <span>
 #include <ranges>
+#include <limits>
 
 namespace mrenderer {
     void Line(int ax, int ay, int bx, int by, Image& framebuffer, const Color& color) {
@@ -79,26 +80,37 @@ namespace mrenderer {
             Line(std::round(x0), y, std::round(x1), y, framebuffer, color);
         }
     }
-    void DrawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, Color v0_c, Color v1_c, Color v2_c, Image& framebuffer) {
+    void DrawTriangle(Vec3f v0_f, Vec3f v1_f, Vec3f v2_f, Color v0_c, Color v1_c, Color v2_c, Image& framebuffer, Image& z_buffer) {
+
+        Vec2i v0 = ProjectOrtho(v0_f, framebuffer.width(), framebuffer.height());
+        Vec2i v1 = ProjectOrtho(v1_f, framebuffer.width(), framebuffer.height());
+        Vec2i v2 = ProjectOrtho(v2_f, framebuffer.width(), framebuffer.height());
+
         Vec2i q1 = v1 - v0;
         Vec2i q2 = v2 - v0;
 
-        int total_area = Cross(q1, q2); // signed double area
-        //if (total_area < 2) return;     // discard backfaces, triangles covering less than 1 px
+        double total_area = Cross(q1, q2); // signed double area
+        if (total_area < 2) return;     // discard backfaces, triangles covering less than 1 px
         auto [start, end] = CalculateAABB<int,2>(std::array{ v0, v1, v2 });
 
         for (int y = start.y; y <= end.y; ++y) {
             for (int x = start.x; x <= end.x; ++x) {
-                Vec2i p = Vec2i{ x, y } - v0;
-                float gamma = Cross(q1, p) / (float)total_area;
-                float beta = Cross(p, q2) / (float)total_area;
-                float alpha = 1 - beta - gamma;
-                bool inside = alpha >= 0 && beta >= 0 && gamma >= 0;
-                Color color = alpha * v0_c + beta * v1_c + gamma * v2_c;
 
+                Vec2i p = Vec2i{ x, y } - v0;
+                double gamma = Cross(q1, p) / (double)total_area;
+                double beta = Cross(p, q2) / (double)total_area;
+                double alpha = 1 - beta - gamma;
+
+                bool inside = alpha >= 0 && beta >= 0 && gamma >= 0;
                 if (inside) {
-                    
-                    framebuffer.set(x, y, color);
+                    double z_val = alpha * v0_f.z + beta * v1_f.z + gamma * v2_f.z;
+                    uint8_t z_channel = (z_val + 1) * 255 / 2;
+                    if (z_channel > z_buffer.get(x, y).data[0]) {
+                        Color color = alpha * v0_c + beta * v1_c + gamma * v2_c;
+
+                        framebuffer.set(x, y, color);
+                        z_buffer.set(x, y, Color { z_channel, 0, 0, 0});
+                    }
                     //if (alpha >= 0.1f && beta >= 0.1f && gamma >= 0.1f) {
                     //    framebuffer.set(x, y, colors::black);
                     //}
@@ -137,16 +149,11 @@ namespace mrenderer {
         }
     }
 
-    void DrawModel(Model& model, Image& framebuffer) {
-        model.SortTrigsByZ();
+    void DrawModel(Model& model, Image& framebuffer, Image& z_buffer) {
         for (Vec3i trig : model.trigs) {
             Vec3f v0 = model.vertices[trig.data[0]];
             Vec3f v1 = model.vertices[trig.data[1]];
             Vec3f v2 = model.vertices[trig.data[2]];
-
-            Vec2i v0_p = ProjectOrtho(v0, framebuffer.width(), framebuffer.height());
-            Vec2i v1_p = ProjectOrtho(v1, framebuffer.width(), framebuffer.height());
-            Vec2i v2_p = ProjectOrtho(v2, framebuffer.width(), framebuffer.height());
 
             Color c {
                 std::rand() % 255,
@@ -155,8 +162,7 @@ namespace mrenderer {
                 255
             };
 
-            //DrawTriangle(v0_p, v1_p, v2_p, colors::red, colors::green, colors::blue, framebuffer);
-            DrawTriangle(v0_p, v1_p, v2_p, c, c, c, framebuffer);
+            DrawTriangle(v0, v1, v2, c, c, c, framebuffer, z_buffer);
         }
     }
 
@@ -171,6 +177,7 @@ namespace mrenderer {
         Vec2i v2{ 2, kHeight - 16 };
 
         Image framebuffer = Image(kWidth, kHeight, 3);
+        Image z_buffer = Image(kWidth, kHeight, 1);
 
         auto trig = std::array<Vec2i, 3>{ v0, v1, v2 };
 
@@ -179,9 +186,10 @@ namespace mrenderer {
 
         //DrawTriangle(v0, v1, v2, colors::red, colors::green, colors::blue, framebuffer);
         Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
-        DrawModel(m, framebuffer);
+        DrawModel(m, framebuffer, z_buffer);
         //DrawWireframe(m, framebuffer);
         
         framebuffer.WritePng("framebuffer.png", true);
+        z_buffer.WritePng("z_buffer.png", true);
     }
 }
