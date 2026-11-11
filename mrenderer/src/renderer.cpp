@@ -8,7 +8,7 @@
 #include <array>
 #include <span>
 #include <ranges>
-#include <limits>
+#include <algorithm>
 
 namespace mrenderer {
     void Line(int ax, int ay, int bx, int by, Image& framebuffer, const Color& color) {
@@ -86,38 +86,35 @@ namespace mrenderer {
         Vec2i v1 = ProjectOrtho(v1_f, framebuffer.width(), framebuffer.height());
         Vec2i v2 = ProjectOrtho(v2_f, framebuffer.width(), framebuffer.height());
 
-        Vec2i q1 = v1 - v0;
-        Vec2i q2 = v2 - v0;
+        Vec2i e1 = v2 - v0; // edge opposite to v1
+        Vec2i e2 = v1 - v0; // edge opposite to v2
 
-        double total_area = Cross(q1, q2); // signed double area
+        int total_area = Cross(e2, e1); // signed double area
         if (total_area < 2) return;     // discard backfaces, triangles covering less than 1 px
         auto [start, end] = CalculateAABB<int,2>(std::array{ v0, v1, v2 });
 
         for (int y = start.y; y <= end.y; ++y) {
             for (int x = start.x; x <= end.x; ++x) {
-
                 Vec2i p = Vec2i{ x, y } - v0;
-                double gamma = Cross(q1, p) / (double)total_area;
-                double beta = Cross(p, q2) / (double)total_area;
+
+                int w1 = Cross(p, e1);
+                int w2 = Cross(e2, p);
+                int w0 = total_area - w1 - w2;
+
+                bool inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+                if (!inside) continue;
+
+                double gamma = w2 / (double)total_area;
+                double beta = w1 / (double)total_area;
                 double alpha = 1 - beta - gamma;
 
-                bool inside = alpha >= 0 && beta >= 0 && gamma >= 0;
-                if (inside) {
-                    double z_val = alpha * v0_f.z + beta * v1_f.z + gamma * v2_f.z;
-                    uint8_t z_channel = (z_val + 1) * 255 / 2;
-                    if (z_channel > z_buffer.get(x, y).data[0]) {
-                        Color color = alpha * v0_c + beta * v1_c + gamma * v2_c;
+                double z_val = alpha * v0_f.z + beta * v1_f.z + gamma * v2_f.z;
+                uint8_t z_channel = (z_val + 1) * 255 / 2;
+                if (z_channel > z_buffer.get(x, y).data[0]) {
+                    Color color = alpha * v0_c + beta * v1_c + gamma * v2_c;
 
-                        framebuffer.set(x, y, color);
-                        z_buffer.set(x, y, Color { z_channel, 0, 0, 0});
-                    }
-                    //if (alpha >= 0.1f && beta >= 0.1f && gamma >= 0.1f) {
-                    //    framebuffer.set(x, y, colors::black);
-                    //}
-                    //float dist = Length(Vec3f{ alpha, beta, gamma } - Vec3f{ 0.3f, 0.3f, 0.3f });
-                    //if (dist <= 0.6f) {
-                    //    framebuffer.set(x, y, colors::black);
-                    //}
+                    framebuffer.set(x, y, color);
+                    z_buffer.set(x, y, Color { z_channel, 0, 0, 0});
                 }
             }
         }
@@ -166,30 +163,49 @@ namespace mrenderer {
         }
     }
 
-    void RunTest() {
+    void DrawDiabloModel() {
         constexpr int kWidth = 1280;
         constexpr int kHeight = 720;
-        //constexpr int kWidth = 320;
-        //constexpr int kHeight = 180;
+
+        Image framebuffer = Image(kWidth, kHeight, 3);
+        Image z_buffer = Image(kWidth, kHeight, 1);
+
+        Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
+        DrawModel(m, framebuffer, z_buffer);
+
+        framebuffer.WritePng("framebuffer.png", true);
+        z_buffer.WritePng("z_buffer.png", true);
+    }
+
+    void DrawDebugTriangle() {
+        constexpr int kWidth = 20;
+        constexpr int kHeight = 20;
 
         Vec2i v0{ 10, 1 };
-        Vec2i v1{ kWidth - 13, kHeight - 10 };
-        Vec2i v2{ 2, kHeight - 16 };
+        Vec2i v1{ 13, 10 };
+        Vec2i v2{ 2, 16 };
 
         Image framebuffer = Image(kWidth, kHeight, 3);
         Image z_buffer = Image(kWidth, kHeight, 1);
 
         auto trig = std::array<Vec2i, 3>{ v0, v1, v2 };
+        auto trig3d = std::array<Vec3f, 3>();
+        std::transform(trig.begin(), trig.end(), trig3d.begin(), [](Vec2i& v) {
+            return Vec3f {
+                (float)2*v.x/kWidth - 1,
+                (float)2*v.y/kHeight - 1,
+                1};
+            }
+        );
 
-        //DrawAABB(trig, framebuffer, colors::white);
-        //DrawTriangleScanline(trig, framebuffer, colors::red);
+        DrawTriangle(trig3d[0], trig3d[1], trig3d[2], colors::red, colors::green, colors::blue, framebuffer, z_buffer);
 
-        //DrawTriangle(v0, v1, v2, colors::red, colors::green, colors::blue, framebuffer);
-        Model m = Model("assets/diablo3_pose/diablo3_pose.obj");
-        DrawModel(m, framebuffer, z_buffer);
-        //DrawWireframe(m, framebuffer);
-        
         framebuffer.WritePng("framebuffer.png", true);
         z_buffer.WritePng("z_buffer.png", true);
+    }
+
+    void RunTest() {
+        //DrawDebugTriangle();
+        DrawDiabloModel();
     }
 }
