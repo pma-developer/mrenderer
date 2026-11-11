@@ -42,4 +42,15 @@ namespace mrenderer {
 			}
 		}
 	}
+
+	void Model::SortTrigsByZ() {
+		auto minZ = [&](const Vec3i& t) {
+			return std::min(std::min(vertices[t.data[0]].z, vertices[t.data[1]].z), vertices[t.data[2]].z);
+		};
+
+
+		std::sort(trigs.begin(), trigs.end(), [&](const Vec3i& trig1, const Vec3i& trig2) {
+			return minZ(trig1) < minZ(trig2);
+		});
+	}
 }

@@ -43,20 +43,6 @@ namespace mrenderer {
 	}
 
 	template <typename T, size_t L>
-	T Dot(const Vec<T, L>& v1, const Vec<T, L>& v2) {
-		T res = 0;
-		for (size_t i = 0; i < L; ++i) {
-			res += v1.data[i] * v2.data[i];
-		}
-		return res;
-	}
-
-	template <typename T, size_t L>
-	double Length(const Vec<T, L>& vec) {
-		return sqrt(Dot(vec, vec));
-	}
-
-	template <typename T, size_t L>
 	Vec<T, L> operator+(const Vec<T, L>& lhs, const Vec<T, L>& rhs) {
 		Vec<T, L> result;
 		for (size_t i = 0; i < L; ++i) {
@@ -84,6 +70,21 @@ namespace mrenderer {
 	Vec<T, L>& operator-=(Vec<T, L>& lhs, const Vec<T, L>& rhs) {
 		lhs = lhs - rhs;
 		return lhs;
+	}
+
+
+	template <typename T, size_t L>
+	T Dot(const Vec<T, L>& v1, const Vec<T, L>& v2) {
+		T res = 0;
+		for (size_t i = 0; i < L; ++i) {
+			res += v1.data[i] * v2.data[i];
+		}
+		return res;
+	}
+
+	template <typename T, size_t L>
+	double Length(const Vec<T, L>& vec) {
+		return sqrt(Dot(vec, vec));
 	}
 
 	template <typename T, size_t L>

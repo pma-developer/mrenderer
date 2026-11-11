@@ -13,5 +13,6 @@ namespace mrenderer {
 		Model(const std::filesystem::path& load_path);
 
 		void LoadFromObj(const std::filesystem::path& input_path);
+		void SortTrigsByZ();
 	};
 }

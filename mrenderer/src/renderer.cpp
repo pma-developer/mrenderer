@@ -84,7 +84,7 @@ namespace mrenderer {
         Vec2i q2 = v2 - v0;
 
         int total_area = Cross(q1, q2); // signed double area
-        if (total_area < 2) return;     // discard backfaces, triangles covering less than 1 px
+        //if (total_area < 2) return;     // discard backfaces, triangles covering less than 1 px
         auto [start, end] = CalculateAABB<int,2>(std::array{ v0, v1, v2 });
 
         for (int y = start.y; y <= end.y; ++y) {
@@ -99,12 +99,11 @@ namespace mrenderer {
                 if (inside) {
                     
                     framebuffer.set(x, y, color);
-                    if (alpha >= 0.1f && beta >= 0.1f && gamma >= 0.1f) {
-                        framebuffer.set(x, y, colors::black);
-                    }
+                    //if (alpha >= 0.1f && beta >= 0.1f && gamma >= 0.1f) {
+                    //    framebuffer.set(x, y, colors::black);
+                    //}
                     //float dist = Length(Vec3f{ alpha, beta, gamma } - Vec3f{ 0.3f, 0.3f, 0.3f });
-                    //float dist1 = Length(Vec3f{ alpha, beta, gamma });
-                    //if (dist1 <= 0.6f) {
+                    //if (dist <= 0.6f) {
                     //    framebuffer.set(x, y, colors::black);
                     //}
                 }
@@ -138,7 +137,8 @@ namespace mrenderer {
         }
     }
 
-    void DrawModel(const Model& model, Image& framebuffer) {
+    void DrawModel(Model& model, Image& framebuffer) {
+        model.SortTrigsByZ();
         for (Vec3i trig : model.trigs) {
             Vec3f v0 = model.vertices[trig.data[0]];
             Vec3f v1 = model.vertices[trig.data[1]];
@@ -155,7 +155,8 @@ namespace mrenderer {
                 255
             };
 
-            DrawTriangle(v0_p, v1_p, v2_p, colors::red, colors::green, colors::blue, framebuffer);
+            //DrawTriangle(v0_p, v1_p, v2_p, colors::red, colors::green, colors::blue, framebuffer);
+            DrawTriangle(v0_p, v1_p, v2_p, c, c, c, framebuffer);
         }
     }
 
