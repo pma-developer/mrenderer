@@ -8,15 +8,33 @@ namespace mrenderer {
 	template <typename T, size_t L> struct Vec {
 		T data[L];
 	};
+	template <typename T> struct Vec<T, 4> {
+		union {
+			struct { T x, y, z, w; };
+			struct { T r, g, b, a; };
+			T data[4];
+		};
+
+		static constexpr Vec Zero() { return { 0, 0, 0, 0}; };
+		static constexpr Vec One() { return { 1, 1, 1, 1}; };
+
+		const T& operator[](size_t i) const { return data[i]; }
+		T& operator[](size_t i) { return data[i]; }
+
+	};
 	template <typename T> struct Vec<T, 3> {
 		union {
 			struct { T x, y, z; };
-			struct { T x, y, z; };
+			struct { T r, g, b; };
 			T data[3];
 		};
 
-		static constexpr Vec<T, 3> Zero() { return { 0, 0, 0 }; };
-		static constexpr Vec<T, 3> One()  { return { 1, 1, 1 }; };
+		static constexpr Vec Zero() { return { 0, 0, 0 }; };
+		static constexpr Vec One()  { return { 1, 1, 1 }; };
+
+		const T& operator[](size_t i) const { return data[i]; }
+		T& operator[](size_t i) { return data[i]; }
+
 	};
 	template <typename T> struct Vec<T, 2> {
 		union {
@@ -87,6 +105,8 @@ namespace mrenderer {
 		return sqrt(Dot(vec, vec));
 	}
 
+
+
 	template <typename T, size_t L>
 	std::tuple<Vec<T, L>, Vec<T, L>> CalculateAABB(std::span<const Vec<T, L>> vecs) {
 		Vec<T, L> min = vecs[0], max = vecs[0];
@@ -140,7 +160,7 @@ namespace mrenderer {
 		return std::format("{}", vec);
 	}
 
-
+	using Vec4f = Vec<float, 4>;
 	using Vec3f = Vec<float, 3>;
 	using Vec2f = Vec<float, 2>;
 	using Vec3i = Vec<std::int32_t, 3>;
